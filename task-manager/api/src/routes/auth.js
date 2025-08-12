@@ -1,7 +1,7 @@
 const { Router } = require('express');
 const jwt = require('jsonwebtoken');
 const { z } = require('zod');
-const User = require('../models/User');
+const User = require('../models/user');
 const auth = require('../middleware/auth');
 
 const router = Router();
