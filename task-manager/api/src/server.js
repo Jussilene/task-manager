@@ -5,6 +5,7 @@ const cors = require('cors');
 const morgan = require('morgan');
 const mongoose = require('mongoose');
 const path = require('path');
+const fs = require('fs');
 require('dotenv').config();
 
 const authRoutes = require('./routes/auth');
@@ -55,22 +56,26 @@ app.use('/api/tasks', taskRoutes);
  *       src/server.js  <-- (estamos aqui)
  *     web/
  *       dist/          <-- build do Vite
- *
- * Sobe 2 níveis e entra em web/dist
  */
 const distPath = path.resolve(__dirname, '..', '..', 'web', 'dist');
-app.use(express.static(distPath));
 
-/**
- * SPA fallback: qualquer coisa que não seja /api/*
- * devolve o index.html da aplicação React
- */
-app.get('*', (req, res) => {
-  if (req.path.startsWith('/api')) {
-    return res.status(404).json({ error: 'Not Found' });
-  }
-  res.sendFile(path.join(distPath, 'index.html'));
-});
+if (fs.existsSync(path.join(distPath, 'index.html'))) {
+  // Serve os arquivos do front se existir o build
+  app.use(express.static(distPath));
+
+  // SPA fallback: qualquer rota que não seja /api devolve index.html
+  app.get('*', (req, res) => {
+    if (req.path.startsWith('/api')) {
+      return res.status(404).json({ error: 'Not Found' });
+    }
+    res.sendFile(path.join(distPath, 'index.html'));
+  });
+} else {
+  // Sem build do front, mantenha a raiz simples
+  app.get('/', (_req, res) => {
+    res.status(200).send('API online (sem front build)');
+  });
+}
 
 // ---------- Error handlers ----------
 app.use((req, res) => res.status(404).json({ error: 'Not Found' }));
