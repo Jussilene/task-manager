@@ -4,5 +4,52 @@
     "autoprefixer": "^10.4.21",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.11"
-  }
+  },
+  "name": "task-manager",
+  "version": "1.0.0",
+  "description": "Aplicação **full-stack** com autenticação **JWT**, cadastro/login de usuários e **CRUD de tarefas** com filtros, busca e ordenação.  \r Backend em **Node.js + Express + MongoDB** e frontend em **React + Vite + Tailwind CSS**.",
+  "main": "index.js",
+  "dependencies": {
+    "browserslist": "^4.25.2",
+    "caniuse-lite": "^1.0.30001734",
+    "chownr": "^3.0.0",
+    "detect-libc": "^2.0.4",
+    "electron-to-chromium": "^1.5.200",
+    "enhanced-resolve": "^5.18.3",
+    "escalade": "^3.2.0",
+    "fraction.js": "^4.3.7",
+    "graceful-fs": "^4.2.11",
+    "jiti": "^2.5.1",
+    "lightningcss": "^1.30.1",
+    "lightningcss-win32-x64-msvc": "^1.30.1",
+    "magic-string": "^0.30.17",
+    "minipass": "^7.1.2",
+    "minizlib": "^3.0.2",
+    "mkdirp": "^3.0.1",
+    "mongodb": "^6.18.0",
+    "nanoid": "^3.3.11",
+    "node-releases": "^2.0.19",
+    "normalize-range": "^0.1.2",
+    "picocolors": "^1.1.1",
+    "postcss-value-parser": "^4.2.0",
+    "source-map-js": "^1.2.1",
+    "tapable": "^2.2.2",
+    "tar": "^7.4.3",
+    "update-browserslist-db": "^1.1.3",
+    "yallist": "^5.0.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jussilene/task-manager.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Jussilene/task-manager/issues"
+  },
+  "homepage": "https://github.com/Jussilene/task-manager#readme"
 }
