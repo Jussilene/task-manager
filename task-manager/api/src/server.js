@@ -37,7 +37,7 @@ mongoose
   .then(() => console.log('✅ MongoDB conectado'))
   .catch((err) => {
     console.error('❌ Erro ao conectar no MongoDB', err.message);
-    process.exit(1);
+    process.exit(1); // Pode comentar durante testes se quiser evitar crash
   });
 
 // ---------- Rotas da API ----------
@@ -81,4 +81,7 @@ app.use((err, req, res, next) => {
 
 // ---------- START ----------
 const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => console.log(`🚀 API+WEB rodando em http://localhost:${PORT}`));
+app.set('trust proxy', 1);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 API+WEB rodando em 0.0.0.0:${PORT}`);
+});
