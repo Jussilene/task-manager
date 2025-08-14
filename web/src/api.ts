@@ -1,40 +1,38 @@
-// web/src/api.ts
 import axios from "axios";
 
-/** Em dev usa a API local; em produção usa a API do Render */
-const API_URL = import.meta.env.DEV
-  ? "http://localhost:4000/api"
-  : "https://task-manager-qi34.onrender.com/api";
+/** URLs fixas */
+const PROD_API = "https://task-manager-qi34.onrender.com/api";
+const DEV_API  = "http://localhost:4000/api";
 
-/** Le e grava auth no localStorage */
+/** 
+ * 1ª prioridade: variável de ambiente do Vite (setada no Render)
+ * 2ª prioridade: se o host termina com onrender.com => produção
+ * 3ª prioridade: fallback pelo modo do Vite (dev/prod)
+ */
+const fromEnv = (import.meta as any).env?.VITE_API_BASE as string | undefined;
+
+const API_URL =
+  (fromEnv && fromEnv.trim()) ||
+  (typeof window !== "undefined" && location.hostname.endsWith("onrender.com")
+    ? PROD_API
+    : (import.meta.env.MODE === "production" ? PROD_API : DEV_API));
+
+/** Helpers de auth no localStorage */
 type AuthData = { token: string; user?: { id: string; name?: string; email?: string } };
 
 function loadAuth(): AuthData | null {
-  try {
-    const raw = localStorage.getItem("auth");
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
+  try { const raw = localStorage.getItem("auth"); return raw ? JSON.parse(raw) : null; } catch { return null; }
 }
-function saveAuth(data: AuthData) {
-  try {
-    localStorage.setItem("auth", JSON.stringify(data));
-  } catch {}
-}
-export function clearAuth() {
-  try {
-    localStorage.removeItem("auth");
-  } catch {}
-}
+function saveAuth(data: AuthData) { try { localStorage.setItem("auth", JSON.stringify(data)); } catch {} }
+function clearAuth() { try { localStorage.removeItem("auth"); } catch {} }
 
-/** Instância do axios (envia cookies quando houver) */
+/** Instância do axios (manda cookies quando houver) */
 export const api = axios.create({
   baseURL: API_URL,
   withCredentials: true,
 });
 
-/** Antes de cada request: adiciona Authorization: Bearer <token> se existir */
+/** Antes de cada request: adiciona Authorization se houver token salvo */
 api.interceptors.request.use((config) => {
   const auth = loadAuth();
   if (auth?.token) {
@@ -44,42 +42,19 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-/** Depois de cada response:
- * - Se vier { token, user }, salva no localStorage automaticamente (login/register)
- * - Se a API responder 401 em rotas protegidas, limpa auth
- */
+/** Depois da response: se vier {token, user} salva automaticamente */
 api.interceptors.response.use(
-  (response) => {
-    const data = response?.data as any;
+  (resp) => {
+    const data = resp?.data as any;
     if (data && typeof data === "object" && data.token) {
       saveAuth({ token: data.token, user: data.user });
     }
-    return response;
+    return resp;
   },
-  (error) => {
-    const status = error?.response?.status;
-    if (status === 401) {
-      clearAuth();
-    }
-    return Promise.reject(error);
+  (err) => {
+    if (err?.response?.status === 401) clearAuth();
+    return Promise.reject(err);
   }
 );
 
 export const BASE_API_URL = API_URL;
-
-/** (Opcional) Helpers se quiser usar direto */
-export async function login(email: string, password: string) {
-  const res = await api.post("/auth/login", { email, password });
-  return res.data;
-}
-export async function register(name: string, email: string, password: string) {
-  const res = await api.post("/auth/register", { name, email, password });
-  return res.data;
-}
-export async function logout() {
-  try {
-    await api.post("/auth/logout");
-  } finally {
-    clearAuth();
-  }
-}
