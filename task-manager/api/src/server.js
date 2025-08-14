@@ -16,27 +16,45 @@ const app = express();
 
 // ---------- Middlewares ----------
 app.use(express.json());
-
-// lê cookies (para sessão via cookie)
 app.use(cookieParser());
 
-// CORS com credentials e lista do ENV (permite chamadas sem origin também)
-const allowedOrigins = (process.env.CORS_ORIGIN || '')
+// Monta lista de origens permitidas a partir do ENV
+const envOrigins = (process.env.CORS_ORIGIN || '')
   .split(',')
   .map((s) => s.trim())
   .filter(Boolean);
 
-app.use(
-  cors({
-    credentials: true,
-    origin: (origin, cb) => {
-      if (!origin) return cb(null, true); // ex: curl / health checks
-      if (!allowedOrigins.length) return cb(null, true);
-      if (allowedOrigins.includes(origin)) return cb(null, true);
-      return cb(new Error('Not allowed by CORS'));
-    },
-  })
-);
+// Opções de CORS que cobrem localhost, IP da rede e Render (e preflight)
+const corsOptions = {
+  credentials: true,
+  origin: (origin, cb) => {
+    // Permite requests sem Origin (ex: curl/health)
+    if (!origin) return cb(null, true);
+
+    // Se estiver explicitamente no ENV, permite
+    if (envOrigins.includes(origin)) return cb(null, true);
+
+    // Permite dev local: http://localhost:qualquerporta
+    if (/^http:\/\/localhost:\d+$/.test(origin)) return cb(null, true);
+
+    // Permite rede local: http://192.168.x.x:qualquerporta
+    if (/^http:\/\/192\.168\.\d+\.\d+:\d+$/.test(origin)) return cb(null, true);
+
+    // Permite subdomínios do Render em produção (https)
+    if (/^https:\/\/.*\.onrender\.com$/.test(origin)) return cb(null, true);
+
+    return cb(new Error('Not allowed by CORS: ' + origin));
+  },
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  exposedHeaders: ['Set-Cookie'],
+  preflightContinue: false,
+  optionsSuccessStatus: 204,
+};
+
+app.use(cors(corsOptions));
+// Responde a todos os preflights
+app.options('*', cors(corsOptions));
 
 app.use(morgan('dev'));
 
@@ -55,7 +73,7 @@ app.get('/api', (_req, res) =>
   res.json({ ok: true, name: 'Task Manager API', version: '1.0.0' })
 );
 
-// opcional: healthcheck simples
+// Healthcheck simples
 app.get('/healthz', (_req, res) => res.status(200).send('ok'));
 
 app.use('/api/auth', authRoutes);
@@ -84,7 +102,7 @@ if (fs.existsSync(path.join(distPath, 'index.html'))) {
     res.sendFile(path.join(distPath, 'index.html'));
   });
 } else {
-  // Sem build do front, mantenha a raiz simples
+  // Sem build do front, mantém a raiz simples
   app.get('/', (_req, res) => {
     res.status(200).send('API online (sem front build)');
   });
@@ -92,9 +110,7 @@ if (fs.existsSync(path.join(distPath, 'index.html'))) {
 
 // ---------- START ----------
 const PORT = process.env.PORT || 4000;
-
-// importante para cookies "secure" atrás de proxy (Render)
-app.set('trust proxy', 1);
+app.set('trust proxy', 1); // importante p/ cookies "secure" atrás de proxy (Render)
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 API+WEB rodando em 0.0.0.0:${PORT}`);
