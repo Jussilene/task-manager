@@ -1,3 +1,4 @@
+// web/src/api.ts
 import axios from "axios";
 
 /** Em dev usa a API local; em produção usa a API do Render */
@@ -21,7 +22,7 @@ function saveAuth(data: AuthData) {
     localStorage.setItem("auth", JSON.stringify(data));
   } catch {}
 }
-function clearAuth() {
+export function clearAuth() {
   try {
     localStorage.removeItem("auth");
   } catch {}
@@ -65,3 +66,20 @@ api.interceptors.response.use(
 );
 
 export const BASE_API_URL = API_URL;
+
+/** (Opcional) Helpers se quiser usar direto */
+export async function login(email: string, password: string) {
+  const res = await api.post("/auth/login", { email, password });
+  return res.data;
+}
+export async function register(name: string, email: string, password: string) {
+  const res = await api.post("/auth/register", { name, email, password });
+  return res.data;
+}
+export async function logout() {
+  try {
+    await api.post("/auth/logout");
+  } finally {
+    clearAuth();
+  }
+}
