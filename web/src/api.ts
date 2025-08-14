@@ -1,24 +1,17 @@
 import axios from "axios";
 
-export function getApiBase(): string {
-  // 1) Começa pelo valor do .env (se houver)
-  let base = import.meta.env.VITE_API_BASE || "";
+// Escolhe a URL conforme o ambiente:
+// - DEV: quando você roda `npm run dev` no seu PC
+// - PRODUÇÃO: quando o site está buildado e publicado no Render
+const API_URL = import.meta.env.DEV
+  ? "http://localhost:4000/api"
+  : "https://task-manager-qi34.onrender.com/api";
 
-  // 2) Se estiver com "localhost", troca pelo host atual (funciona no celular usando seu IP da rede)
-  if (base.includes("localhost")) {
-    base = base.replace("localhost", window.location.hostname);
-  }
+// (Opcional) exporta se você quiser usar a base em outros arquivos
+export const BASE_API_URL = API_URL;
 
-  // 3) Se não tiver nada no .env, faz um fallback automático
-  if (!base) {
-    base = `${window.location.protocol}//${window.location.hostname}:4000/api`;
-  }
-
-  return base;
-}
-
-// Instância axios para reusar em todo projeto
+// Instância do axios reutilizável
 export const api = axios.create({
-  baseURL: getApiBase(),
-  withCredentials: true, // mantém cookies e sessões
+  baseURL: API_URL,
+  withCredentials: true, // mantém cookies/sessões
 });
